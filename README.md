@@ -1,7 +1,7 @@
 # tish
 Waveform computation by Direct solution method (DSM)
 
-**  Welcome to the DSM world.  **
+**Welcome to the DSM world.**
 
 This is a package for SH computation 
 for transversely isotropic spherically symmetric media 
