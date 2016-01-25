@@ -10,9 +10,13 @@ You need FORTRAN90 to run this program.
 
 
 CONFIGURATION:  
-```	% make
-
+```	bash
+% make
+```
 USAGE:  
-```	% mpi-tish < (parameter filename)
+``` bash
+% mpi-tish < (parameter filename)
+```	
 
+This *mpi-tish* can also run by mpi.
 
