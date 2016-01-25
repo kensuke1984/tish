@@ -2,7 +2,7 @@
 Waveform computation by Direct solution method (DSM)
 
 This software is developed by Kensuke Konishi.
-This software is based on the software which can be downloaded from [tish][University of Tokyo]
+This software is based on the software which can be downloaded from [University of Tokyo][tish]
 
 **Welcome to the DSM world.**
 
