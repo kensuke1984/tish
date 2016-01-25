@@ -1,4 +1,5 @@
 # tish
+![version][version-image]
 Waveform computation by *Direct solution method* (DSM)
 
 This software is based on the software which can be downloaded from [University of Tokyo][dsm]
@@ -23,3 +24,4 @@ USAGE:
 This *mpi-tish* can also run by mpi.
 
 [dsm]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/software/software.htm
+[version-image]:https://img.shields.io/badge/version-0.3.2-yellow.svg
