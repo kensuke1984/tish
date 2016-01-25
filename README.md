@@ -1,6 +1,9 @@
 # tish
 Waveform computation by Direct solution method (DSM)
 
+This software is developed by Kensuke Konishi.
+This software is based on the software which can be downloaded from [tish][University of Tokyo]
+
 **Welcome to the DSM world.**
 
 This is a package for SH computation 
@@ -20,3 +23,4 @@ USAGE:
 
 This *mpi-tish* can also run by mpi.
 
+[tish]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/software/software.htm
