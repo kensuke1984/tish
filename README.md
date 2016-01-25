@@ -1,5 +1,5 @@
 # tish
-Waveform computation by Direct solution method (DSM)
+Waveform computation by *Direct solution method* (DSM)
 
 This software is based on the software which can be downloaded from [University of Tokyo][tish]
 
