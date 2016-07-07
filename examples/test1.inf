@@ -57,7 +57,7 @@ c parameter for the station
      -5.6753 -58.0637 lat,lon (deg)
      -51.6753 -58.0637 lat,lon (deg)
 c parameter for the output file
-examples/test1.1.spc
-examples/test1.2.spc
+examples/ABC.010202ESH.spc
+examples/XYZ.010202ESH.spc
 c
 end
