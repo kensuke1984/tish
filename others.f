@@ -1,5 +1,95 @@
 c others.f for wcalprem.f
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine pinput2_single( maxnlay,maxnzone,maxnr,
+     &                     re,ratc,ratl,
+     &	                   tlen,np,omegai,imin,imax,
+     &	                   nzone,vrmin,vrmax,rho,vsv,vsh,qmu,
+     &	                   r0,eqlat,eqlon,singleforce,nr,theta,phi,
+     &                    lat,lon,output)
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c Parameter Input
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	implicit none
+	integer maxnlay,maxnzone,maxnr
+	integer np
+	integer imin,imax
+	integer nzone,nr
+	real*8 tlen,omegai,re,ratc,ratl
+	real*8 vrmin(*),vrmax(*),rho(4,*),vsv(4,*),vsh(4,*)
+	real*8 qmu(*)
+	real*8 r0,singleforce(3),theta(*),phi(*),lat(*),lon(*)
+c	real*8 r0,mt(3,3),theta(*),phi(*),lat(*),lon(*)
+	real*8 eqlat,eqlon,stlat,stlon,eqlattmp
+	character*80 output(*)
+	integer i
+	character*80 dummy,tmpfile
+c
+	data tmpfile / 'worksh' /
+c
+c temporary file open
+	open( unit=11, file=tmpfile, status='unknown' )
+c writing to the temporary file
+  100	continue
+	  read(5,110) dummy
+  110	  format(a80)
+	  if ( dummy(1:1).eq.'c' ) goto 100
+	  if ( dummy(1:3).eq.'end' ) goto 120
+	  write(11,110) dummy
+	  goto 100
+  120	continue
+c temporary file close
+	close(11)
+c 
+c temporary file open
+	open( unit=11, file=tmpfile, status='unknown' )
+c reading the parameter
+	read(11,*) tlen,np
+	read(11,*) re		! relative error (vertical grid)
+	read(11,*) ratc		! ampratio (vertical grid cut-off)
+	read(11,*) ratl		! ampratio (for l-cutoff)
+	read(11,*) omegai	! omegai
+	omegai = - dlog(omegai) / tlen
+c
+	read(11,*) imin,imax
+c	  if ( nlayer(i).gt.maxnlay )
+c     &	    pause 'nlayer is too large. (pinput)'
+c  130	continue
+	read(11,*) nzone
+	if ( nzone.gt.maxnzone )
+     &	  stop 'nzone is too large. (pinput)'
+	do 140 i=1,nzone
+	  read(11,*) vrmin(i),vrmax(i),
+     &	             rho(1,i),rho(2,i),rho(3,i),rho(4,i),
+     &	              vsv(1,i), vsv(2,i), vsv(3,i), vsv(4,i),
+     &	              vsh(1,i), vsh(2,i), vsh(3,i), vsh(4,i), qmu(i)
+  140	continue
+c source parameter
+	read(11,*) r0,eqlat,eqlon
+	eqlattmp = eqlat
+	call translat(eqlattmp,eqlattmp)
+c	read(11,*) mt(1,1),mt(1,2),mt(1,3),mt(2,2),mt(2,3),mt(3,3)
+	read(11,*) singleforce(1),singleforce(2),singleforce(3)
+	read(11,*) nr
+	if ( nr.gt.maxnr )
+     &	  stop 'nr is too large. (pinput)'
+	do 150 i=1,nr
+	  read(11,*) lat(i),lon(i)
+	  stlat = lat(i)
+	  stlon = lon(i)
+	  call translat(stlat,stlat)
+	  call calthetaphi(eqlattmp,eqlon,stlat,stlon,theta(i),phi(i))
+  150	continue
+	do 160 i=1,nr
+	  read(11,110) output(i)
+  160	continue
+c temporary file close
+	close(11)
+c
+       call unlink(tmpfile)
+	return
+	end
+c
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine pinput2( maxnlay,maxnzone,maxnr,
      &                     re,ratc,ratl,
      &	                   tlen,np,omegai,imin,imax,
