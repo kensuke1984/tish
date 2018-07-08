@@ -4,34 +4,21 @@ FC	= mpif90
 FC2=ifort
 FFLAGS	= -O
 
-SRC = calmat.f trialf.f others.f dclisb.f dclisb3.f formpi.f mpi-tish.f
-SRC2 = calmat.f trialf.f others.f dclisb.f dclisb3.f tish.f
-SRC_SINGLE = calmat.f trialf.f others.f dclisb.f dclisb3.f formpi.f mpi-tish_single.f
-OBJS	= $(SRC:.f=.o)
-OBJS2 =$(SRC2:.f=.o)
-OBJS_SINGLE =$(SRC_SINGLE:.f=.o)
-.SUFFIXES: .f .o
+SRC = calmat.f90 trialf.f90 others.f90 dclisb.f90 \
+	dclisb3.f90 formpi.f90 mpi-tish.f90
+OBJS	= $(SRC:.f90=.o)
+.SUFFIXES: .f90 .o
 
-all:$(PROGS) tish mpi-tish_single
+all:$(PROGS)
 
 mpi-tish: $(OBJS)
 	$(FC) $(FFLAGS) -o $@ $(OBJS) 
 
-mpi-tish_single: $(OBJS_SINGLE)
-	$(FC) $(FFLAGS) -o $@ $(OBJS_SINGLE) 
+mpi-tish.o: mpi-tish.f90
+	$(FC) $(FFLAGS) -c mpi-tish.f90 -o $@
 
-
-tish: $(OBJS2)
-	$(FC2) $(FFLAGS) -o $@ $(OBJS2)
-
-mpi-tish.o: mpi-tish.f
-	$(FC) $(FFLAGS) -c mpi-tish.f -o $@
-
-mpi-tish_single.o: mpi-tish_single.f
-	$(FC) $(FFLAGS) -c mpi-tish_single.f -o $@
-
-.f.o:
+.f90.o:
 	$(FC2) $(FFLAGS) -c $< 
 
 clean:
-	rm -f $(OBJS) $(OBJS2) $(PROGS) $(OBJS_SINGLE) mpi-tish_single tish work
+	rm -f $(OBJS) $(PROGS) $(OBJS_SINGLE) work
