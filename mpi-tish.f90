@@ -382,7 +382,7 @@ program tish
 
   
     do i= mpimin(my_rank+1), mpimax(my_rank+1)! omega-loop
-        call cpu_time(stime)
+!        call cpu_time(stime)
         u(:,1:nr)=0
         if ( i/=0 ) then
             omega = 2.d0 * pi * dble(i) / tlen
@@ -467,8 +467,8 @@ program tish
         endif
         outputu (:,1:nr,i) =u (:,1:nr)
 
-        call cpu_time(etime)
-        print*,i,u(3,1),etime-stime
+!        call cpu_time(etime)
+!        print*,i,u(3,1),etime-stime
     enddo                   ! omega-loop
     if(my_rank /=0) then
         call mpi_send(outputu(1,1,mpimin(my_rank+1)), &
