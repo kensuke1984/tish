@@ -26,7 +26,7 @@ USAGE:
 This *mpi-tish* can also run by mpi.
 
 [dsm]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/software/software.htm
-[version-image]:https://img.shields.io/badge/version-0.90.0-yellow.svg
+[version-image]:https://img.shields.io/badge/version-1.0.0a-yellow.svg
 
 [release-image]:https://img.shields.io/badge/release-Hinterland-pink.svg
 [release]:https://finalfantasy.wikia.com/wiki/Dravanian_Hinterlands
