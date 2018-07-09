@@ -1,4 +1,4 @@
-SUBROUTINE DCLISB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
+SUBROUTINE dclisb0_pretreatment(A, N, NUD, N1, B, EPS, DR, Z, IER)
     !************************************************************************
     !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
     !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
@@ -90,8 +90,66 @@ SUBROUTINE DCLISB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
             DR(J) = DCMPLX(1.0D0) / T
         enddo
     ENDIF
-    !c SUBTITUTION
+    !c
+    RETURN
+END
+
+SUBROUTINE DCLISB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
+    !************************************************************************
+    !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
+    !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
+    !*  PARAMETERS                                                          *
+    !*    (1) A : 2-DIM. ARRAY CONTAINING THE MATRIX.                       *
+    !*    (2) N : ORDER OF THE MATRIX.                                      *
+    !*    (3) NUD : SIZE OF BAND'S HALF WIDTH.                              *
+    !*    (4) N1 : ROW SIZE OF THE ARRAY A IN THE 'DIMENSION' STATEMENT.    *
+    !*    (5) B : 1-DIM. ARRAY CONTAINING THE RIGHT HAND SIDE VECTOR.       *
+    !*    (6) EPS : PARAMETER TO CHECK SINGURARITY OFF THE MATRIX           *
+    !*              STANDARD VALUE = 1.0D-14                                *
+    !*    (7) DR : 1-DIM. WORKING ARRAY.                                    *
+    !*    (8) Z : 1-DIM. WORKING ARRAY.                                     *
+    !*    (9) IER : ERROR CODE.                                             *
+    !*  COPY RIGHT   T. OGUNI   JULY 30 1989   VERSION 1.0                  *
+     !* modified Kensuke Konishi 2018 in Paris
+      !************************************************************************
+    COMPLEX(kind(0d0)):: A(N1,N), B(N), DR(N), Z(N)
+    double precision:: EPS
+    INTEGER:: N, NUD, N1 ,IER
+    COMPLEX (kind(0d0))::XX, S, SUM, AU, T
+    double precision:: EPS1
+    INTEGER:: I ,M, J, K1, MJ, I1, K, J1
+    call dclisb0_pretreatment(A, N, NUD, N1, B, EPS, DR, Z, IER)
     ENTRY DCSBSUB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
+     !c  FORWARD SUBSTITUTION
+    call dclisb0_kenja(A, N, NUD, N1, B, EPS, DR, Z, IER)
+    !c
+    RETURN
+END
+    
+SUBROUTINE dclisb0_kenja(A, N, NUD, N1, B, EPS, DR, Z, IER)
+    !************************************************************************
+    !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
+    !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
+    !*  PARAMETERS                                                          *
+    !*    (1) A : 2-DIM. ARRAY CONTAINING THE MATRIX.                       *
+    !*    (2) N : ORDER OF THE MATRIX.                                      *
+    !*    (3) NUD : SIZE OF BAND'S HALF WIDTH.                              *
+    !*    (4) N1 : ROW SIZE OF THE ARRAY A IN THE 'DIMENSION' STATEMENT.    *
+    !*    (5) B : 1-DIM. ARRAY CONTAINING THE RIGHT HAND SIDE VECTOR.       *
+    !*    (6) EPS : PARAMETER TO CHECK SINGURARITY OFF THE MATRIX           *
+    !*              STANDARD VALUE = 1.0D-14                                *
+    !*    (7) DR : 1-DIM. WORKING ARRAY.                                    *
+    !*    (8) Z : 1-DIM. WORKING ARRAY.                                     *
+    !*    (9) IER : ERROR CODE.                                             *
+    !*  COPY RIGHT   T. OGUNI   JULY 30 1989   VERSION 1.0                  *
+     !* modified Kensuke Konishi 2018 in Paris
+      !************************************************************************
+    COMPLEX(kind(0d0)):: A(N1,N), B(N), DR(N), Z(N)
+    double precision:: EPS
+    INTEGER:: N, NUD, N1 ,IER
+    COMPLEX (kind(0d0))::XX, S, SUM, AU, T
+    double precision:: EPS1
+    INTEGER:: I ,M, J, K1, MJ, I1, K, J1
     !c  FORWARD SUBSTITUTION
     M = NUD + 1
     IF (M < 3) THEN
@@ -110,7 +168,7 @@ SUBROUTINE DCLISB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
         Z(1) = B(1)
         Z(2) = B(2) - A(M-1,2) * Z(1)
         DO J=3,N
-            IF (J .GT. M) THEN
+            IF (J > M) THEN
                 I1 = 1
             ELSE
                 I1 = M - J + 1
@@ -141,4 +199,5 @@ SUBROUTINE DCLISB0(A, N, NUD, N1, B, EPS, DR, Z, IER)
     !c
     RETURN
 END
-    
+
+

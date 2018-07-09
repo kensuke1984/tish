@@ -272,7 +272,7 @@ subroutine cala0( nlayer,omega,omegai,t,h1,h2,h3,h4,coef,a0 )
     double precision:: omega,omegai
     double precision:: t(*)
     double precision:: h1(*),h2(*),h3(*),h4(*)
-    complex*16 comega2,coef,a0(*)
+    complex(kind(0d0)) comega2,coef,a0(*)
     integer:: i
     double precision:: h
     !c
@@ -292,7 +292,7 @@ subroutine cala2( nlayer,h4,coef,a2 )
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     integer:: nlayer
     double precision:: h4(*)
-    complex*16 coef,a2(*)
+    complex(kind(0d0)):: coef,a2(*)
     integer:: i
     !c
     do i=1,4*nlayer
@@ -331,7 +331,7 @@ subroutine calga(nlayer,omega,omegai,l,t,h1,h2,h3,h4,coef,a)
     double precision:: omega,omegai
     double precision:: t(*)
     double precision:: h1(*),h2(*),h3(*),h4(*)
-    complex*16 comega2,coef,a(*)
+    complex(kind(0d0)):: comega2,coef,a(*)
     integer:: i
     double precision:: h,xl2m2
     !c
@@ -430,7 +430,7 @@ subroutine calg2( l,m,spo,r0,mt,mu0,coef,ga,a,ga2,dr,g2 )
     data eps/ -1.d0 /
     !c
     !c computing of particular solution with free surface boundary conditions
-    call cvecinit( 3,cg2 )
+    cg2=0
     dd = dcmplx( 0.d0 )
     if ( m>=0 ) then
         sgn = 1.d0
@@ -442,7 +442,7 @@ subroutine calg2( l,m,spo,r0,mt,mu0,coef,ga,a,ga2,dr,g2 )
         !c
         dd = dcmplx( b1 ) * ( dcmplx( sgn * mt(1,3), mt(1,2) ) )/ ( dcmplx( r0 * r0 * mu0 ) * coef )
         itmp = 4
-        call cvecinit( 3,cg2 )
+        cg2=0
         do  i=2,3
             cg2(i) = - dd * ( ga(itmp+1) + ga(itmp+2) )
             itmp = itmp + 2

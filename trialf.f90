@@ -8,7 +8,7 @@ subroutine calbveczero( l,bvec )
     complex(kind(0d0)) :: bvec(1:3,-2:2)
 
     xl2 = dble(l) * dble(l+1)
-	
+	bvec(1,:)=0
     do m=0,min0(l,1)
         fact = 1.d0
         if ( m/=0 ) then
@@ -17,8 +17,6 @@ subroutine calbveczero( l,bvec )
             enddo
         endif
         coef = dsqrt( dble(2*l+1)/(4.d0*pi) / fact )
-        bvec(1,m)  = dcmplx( 0.d0 )
-        bvec(1,-m) = dcmplx( 0.d0 )
         bvec(2,m)  = dcmplx( 0.d0, dble(m)) *  xl2 *coef / 2.d0
         bvec(2,-m) = dcmplx(conjg( bvec(2,m)) )
         bvec(3,m) =  -dcmplx(dble(m),0.d0) * xl2 * coef / 2.d0
@@ -55,6 +53,7 @@ subroutine calbvec( l,theta,phi,plm,bvec )
     do m=0,min0(l,3)
         call calplm( l,m,x,plm(1,m) )
     enddo
+    bvec(1,:)=0
     do  m=0,min0(l,2)
         fact = 1.d0
         if ( m/=0 ) then
@@ -64,8 +63,6 @@ subroutine calbvec( l,theta,phi,plm,bvec )
         endif
         coef = dsqrt( dble(2*l+1)/(4.d0*pi) / fact )
         expimp = cdexp( dcmplx( 0.d0, dble(m)*phi ) )
-        bvec(1,m)  = dcmplx( 0.d0 )
-        bvec(1,-m) = dcmplx( 0.d0 )
         bvec(2,m)  = dcmplx( 0.d0, dble(m) ) / dsin( theta )&
             * coef * plm(1,m) * expimp
         bvec(2,-m) = dconjg( bvec(2,m) )

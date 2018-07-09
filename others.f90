@@ -1,92 +1,5 @@
 !c others.f for wcalprem.f
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine pinput2_single( maxnlay,maxnzone,maxnr,&
-    re,ratc,ratl,&
-    tlen,np,omegai,imin,imax,&
-    nzone,vrmin,vrmax,rho,vsv,vsh,qmu,&
-    r0,eqlat,eqlon,singleforce,nr,theta,phi,&
-    lat,lon,output)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Parameter Input
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    implicit none
-    integer:: maxnlay,maxnzone,maxnr
-    integer:: np
-    integer:: imin,imax
-    integer:: nzone,nr
-    double precision:: tlen,omegai,re,ratc,ratl
-    double precision:: vrmin(*),vrmax(*),rho(4,*),vsv(4,*),vsh(4,*)
-    double precision:: qmu(*)
-    double precision:: r0,singleforce(3),theta(*),phi(*),lat(*),lon(*)
-    !c	double precision:: r0,mt(3,3),theta(*),phi(*),lat(*),lon(*)
-    double precision:: eqlat,eqlon,stlat,stlon,eqlattmp
-    character(80) output(*)
-    integer:: i
-    character(80) dummy,tmpfile
-    !c
-    data tmpfile / 'worksh' /
-    !c
-    !c temporary file open
-    open( unit=11, file=tmpfile, status='unknown' )
-!c writing to the temporary file
-100 continue
-    read(5,110) dummy
-110 format(a80)
-    if ( dummy(1:1)=='c' ) goto 100
-    if ( dummy(1:3)=='end' ) goto 120
-    write(11,110) dummy
-    goto 100
-120 continue
-    !c temporary file close
-    close(11)
-    !c
-    !c temporary file open
-    open( unit=11, file=tmpfile, status='unknown' )
-    !c reading the parameter
-    read(11,*) tlen,np
-    read(11,*) re		! relative error (vertical grid)
-    read(11,*) ratc		! ampratio (vertical grid cut-off)
-    read(11,*) ratl		! ampratio (for l-cutoff)
-    read(11,*) omegai	! omegai
-    omegai = - dlog(omegai) / tlen
-    !c
-    read(11,*) imin,imax
-    !c	  if ( nlayer(i)>maxnlay )
-    !c     &	    pause 'nlayer is too large. (pinput)'
-    !c  130	continue
-    read(11,*) nzone
-    if ( nzone>maxnzone ) stop 'nzone is too large. (pinput)'
-    do  i=1,nzone
-        read(11,*) vrmin(i),vrmax(i),&
-            rho(1,i),rho(2,i),rho(3,i),rho(4,i),&
-            vsv(1,i), vsv(2,i), vsv(3,i), vsv(4,i),&
-            vsh(1,i), vsh(2,i), vsh(3,i), vsh(4,i), qmu(i)
-    enddo
-    !c source parameter
-    read(11,*) r0,eqlat,eqlon
-    eqlattmp = eqlat
-    call translat(eqlattmp,eqlattmp)
-    !c	read(11,*) mt(1,1),mt(1,2),mt(1,3),mt(2,2),mt(2,3),mt(3,3)
-    read(11,*) singleforce(1),singleforce(2),singleforce(3)
-    read(11,*) nr
-    if ( nr>maxnr ) stop 'nr is too large. (pinput)'
-    do i=1,nr
-        read(11,*) lat(i),lon(i)
-        stlat = lat(i)
-        stlon = lon(i)
-        call translat(stlat,stlat)
-        call calthetaphi(eqlattmp,eqlon,stlat,stlon,theta(i),phi(i))
-    enddo
-    do  i=1,nr
-        read(11,110) output(i)
-    enddo
-    !c temporary file close
-    close(11)
-    !c
-    call unlink(tmpfile)
-    return
-end
-!c
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine pinput2( maxnlay,maxnzone,maxnr,&
     re,ratc,ratl,tlen,np,omegai,imin,imax,&
@@ -246,14 +159,12 @@ subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
     integer:: nzone,imax,lmin
     double precision:: vrmin(*),vrmax(*),vs(4,*)
     double precision:: rmin,rmax,tlen,vmin(*),gridpar(*),dzpar(*)
-    integer:: izone,i,j
+    integer:: izone,j
     double precision:: coef1,coef2,v(4),vs1,vs2,rh,omega,amax,gtmp
     !c
     do izone=1,nzone
         !c computing the S-velocity at each zone
-        do  i=1,4
-            v(i) = vs(i,izone)
-        enddo
+            v(:) = vs(:,izone)
         vs1 = 0.d0
         vs2 = 0.d0
         do j=1,4
@@ -274,7 +185,7 @@ subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
         rh = vrmax(izone) - vrmin(izone)
         !c computing omega,amax
         omega = 2.d0 * pi * dble(imax) / tlen
-        if ( vs1.ge.vs2 ) then
+        if ( vs1>=vs2 ) then
             vmin(izone) = vs2
         else
             vmin(izone) = vs1
@@ -292,10 +203,7 @@ subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
         endif
     enddo
     !c rearangement of gridpar
-    gtmp = 0.d0
-    do izone=1,nzone
-        gtmp = gtmp + gridpar(izone)
-    enddo
+    gtmp = sum(gridpar(1:nzone))
     do izone=1,nzone
         if ( gridpar(izone)>0.d0 ) then
             gridpar(izone) = gridpar(izone) / gtmp
@@ -305,13 +213,8 @@ subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
         endif
     enddo
     !c re-rearangement of gridpar
-    gtmp = 0.d0
-    do  izone=1,nzone
-        gtmp = gtmp + gridpar(izone)
-    enddo
-    do  izone=1,nzone
-        gridpar(izone) = gridpar(izone) / gtmp
-    enddo
+    gtmp = sum(gridpar(1:nzone))
+    gridpar(1:nzone)=gridpar(1:nzone)/gtmp
     !c
     return
 end
@@ -328,7 +231,7 @@ subroutine calra( maxnlay,maxnzone,&
     double precision,parameter:: pi=3.1415926535897932d0
     !c
     integer:: maxnlay,maxnzone
-    integer:: nlayer,inlayer
+    integer:: nlayer
     integer:: nzone,nnl(maxnzone)
     double precision:: gridpar(*),dzpar(*),vrmin(*),vrmax(*),rmin,rmax,r0
     double precision:: ra(maxnlay+maxnzone+1)
@@ -336,7 +239,6 @@ subroutine calra( maxnlay,maxnzone,&
     double precision:: rh,re
     !c
     !c Initializing the data
-    inlayer = 0
     do i=1,maxnlay+maxnzone+1
         ra(i) = 0.d0
     enddo
@@ -366,11 +268,7 @@ subroutine calra( maxnlay,maxnzone,&
     enddo
     !c
     !c recouting the total number of grid points
-    inlayer = 0
-    do   izone=1,nzone
-        inlayer = inlayer + nnl(izone)
-    enddo
-    nlayer = inlayer
+    nlayer =sum(nnl(1:nzone))
     !c
     return
 end
@@ -380,7 +278,7 @@ subroutine calra0( nlayer,nzone,vrmin,vrmax,nnl,ra )
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     !c Computing the number and the location of grid points.
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nlayer,nzone,nnl(*)
+    integer:: nlayer,nzone,nnl(nzone)
     double precision:: vrmin(*),vrmax(*),ra(*)
     integer:: izone,itmp,i
     double precision:: rmin,rmax,rh
@@ -399,10 +297,7 @@ subroutine calra0( nlayer,nzone,vrmin,vrmax,nnl,ra )
         enddo
     enddo
     !c recouting the total number of grid points
-    nlayer = 0
-    do izone=1,nzone
-        nlayer = nlayer + nnl(izone)
-    enddo
+    nlayer = sum(nnl)
     !c
     return
 end
@@ -623,63 +518,7 @@ subroutine calcoef( nzone,omega,q,coef )
     return
 end
 !c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine calu( c0,lsq,bvec,u )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    double precision:: lsq
-    complex(kind(0d0)) c0,bvec(3),u(3)
-    !c
-    u(1) = dcmplx( 0.d0 )
-    u(2) = u(2) + c0 * bvec(2) / dcmplx(lsq)
-    u(3) = u(3) + c0 * bvec(3) / dcmplx(lsq)
-    !c
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine matinit( n1,n2,a )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: n1,n2,i,j
-    double precision:: a(n1,*)
-    !c
-    do  j=1,n2
-        do  i=1,n1
-            a(i,j) = 0.d0
-        enddo
-    enddo
-    !c
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine cmatinit( n1,n2,a )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: n1,n2,i,j
-    complex(kind(0d0)) a(n1,*)
-    !c
-    do j=1,n2
-        do  i=1,n1
-            a(i,j) = dcmplx( 0.d0 )
-        enddo
-    enddo    !c
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine cvecinit( nn,b )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Filling zero to the vector 'g'.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nn,i
-    complex(kind(0d0)) b(*)
-    !c
-    do i=1,nn
-        b(i) = dcmplx( 0.d0 )
-    enddo
-    !c
-    return
-end
-!c
+
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calcutd(nzone,nnl,tmpr,rat,nn,ra,kc)
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -694,16 +533,11 @@ subroutine calcutd(nzone,nnl,tmpr,rat,nn,ra,kc)
     double precision:: maxamp,amp(nn)
     integer:: iz,jz,jj,i,ml(nzone),tzone
     !c
-    do jj=1,nn
-        cU(jj) = 0.d0
-    enddo
+    cU(1:nn) = 0
     !c
     iz = 2
     jz = 1
-    do jj=1,nn
-        !c	   cU(jj) = cdabs(tmpc(jj))
-        cU(jj) = tmpr(jj)
-    enddo
+    cU(1:nn) = tmpr(1:nn)
     !c
     maxamp = -1.d0
     do i=1,nn
@@ -781,10 +615,10 @@ subroutine calamp(g,l,lsuf,maxamp,ismall,ratl)
     ampratio = 0.d0
     amp = cdabs(g)
     if( amp>maxamp ) maxamp = amp
-    if ( (amp/=0.d0).and.(maxamp/=0.d0) ) then
+    if ( amp/=0.d0.and.maxamp/=0.d0 ) then
         ampratio = amp / maxamp
     endif
-    if( (ampratio<ratl).and.(l>lsuf) ) then
+    if( ampratio<ratl.and.l>lsuf ) then
         ismall = ismall + 1
     else
         ismall = 0

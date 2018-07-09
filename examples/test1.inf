@@ -1,7 +1,7 @@
 c
 c
 c parameter for the periodic range
-  409.6    24   tlen(s),np
+  3276.8    1024   tlen(s),np
 c relative error (See GT95 eq. 6.2)
    1.d-2 re
 c ampratio using in grid cut-off (1.d-10 is recommended)
@@ -12,7 +12,7 @@ c wrap-around attenuation for omegai
    1.d-2 
 c parameter for the trial function
 c imin imax  
-    0   24 
+    0   1024
 c parameter for the structure
    10   nzone
 c  --- Radius(km) ---  --- Density (g/cm^3) ---

@@ -1,4 +1,4 @@
-SUBROUTINE DCLISB(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
+SUBROUTINE dclisb_pretreatment(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
     !************************************************************************
     !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
     !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
@@ -89,8 +89,65 @@ SUBROUTINE DCLISB(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
             DR(J) = DCMPLX(1.0D0) / T
         enddo
     ENDIF
+
+    !c
+    RETURN
+END
+
+SUBROUTINE DCLISB(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
+    !************************************************************************
+    !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
+    !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
+    !*  PARAMETERS                                                          *
+    !*    (1) A : 2-DIM. ARRAY CONTAINING THE MATRIX.                       *
+    !*    (2) N : ORDER OF THE MATRIX.                                      *
+    !*    (3) NUD : SIZE OF BAND'S HALF WIDTH.                              *
+    !*    (4) N1 : ROW SIZE OF THE ARRAY A IN THE 'DIMENSION' STATEMENT.    *
+    !*    (5) B : 1-DIM. ARRAY CONTAINING THE RIGHT HAND SIDE VECTOR.       *
+    !*    (6) EPS : PARAMETER TO CHECK SINGURARITY OFF THE MATRIX           *
+    !*              STANDARD VALUE = 1.0D-14                                *
+    !*    (7) DR : 1-DIM. WORKING ARRAY.                                    *
+    !*    (8) Z : 1-DIM. WORKING ARRAY.                                     *
+    !*    (9) IER : ERROR CODE.                                             *
+    !*  COPY RIGHT   T. OGUNI   JULY 30 1989   VERSION 1.0                  *
+    !* modified Kensuke Konishi 2018 in Paris
+    !************************************************************************
+    COMPLEX(kind(0d0)):: A(N1,N), B(N), DR(N), Z(N)
+    double precision:: EPS, EPS1
+    INTEGER:: N, NUD, N1, NP, IER
+    DOUBLE COMPLEX:: XX, S, SUM, AU, T
+    INTEGER:: I ,M, J, K1, MJ, I1, K
+    call dclisb_pretreatment(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
     !c SUBTITUTION
     ENTRY DCSBSUB(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
+    call dclisb_kenja(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
+    !c
+    RETURN
+END
+
+SUBROUTINE dclisb_kenja(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
+    !************************************************************************
+    !*  SIMULTANEOUS LINEAR EQUATIONS WITH REAL SYMMETRIC POSITIVE DEFINITE *
+    !*      BAND MATRIX BY CHOLESKY METHOD.                                 *
+    !*  PARAMETERS                                                          *
+    !*    (1) A : 2-DIM. ARRAY CONTAINING THE MATRIX.                       *
+    !*    (2) N : ORDER OF THE MATRIX.                                      *
+    !*    (3) NUD : SIZE OF BAND'S HALF WIDTH.                              *
+    !*    (4) N1 : ROW SIZE OF THE ARRAY A IN THE 'DIMENSION' STATEMENT.    *
+    !*    (5) B : 1-DIM. ARRAY CONTAINING THE RIGHT HAND SIDE VECTOR.       *
+    !*    (6) EPS : PARAMETER TO CHECK SINGURARITY OFF THE MATRIX           *
+    !*              STANDARD VALUE = 1.0D-14                                *
+    !*    (7) DR : 1-DIM. WORKING ARRAY.                                    *
+    !*    (8) Z : 1-DIM. WORKING ARRAY.                                     *
+    !*    (9) IER : ERROR CODE.                                             *
+    !*  COPY RIGHT   T. OGUNI   JULY 30 1989   VERSION 1.0                  *
+    !* modified Kensuke Konishi 2018 in Paris
+    !************************************************************************
+    COMPLEX(kind(0d0)):: A(N1,N), B(N), DR(N), Z(N)
+    double precision:: EPS, EPS1
+    INTEGER:: N, NUD, N1, NP, IER
+    DOUBLE COMPLEX:: XX, S, SUM, AU, T
+    INTEGER:: I ,M, J, K1, MJ, I1, K
     !c  FORWARD SUBSTITUTION
     M = NUD + 1
     IF (M < 3) THEN
@@ -125,3 +182,4 @@ SUBROUTINE DCLISB(A, N, NUD, N1, NP, B, EPS, DR, Z, IER)
     RETURN
 END
     
+
