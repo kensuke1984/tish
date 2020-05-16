@@ -1,11 +1,11 @@
 # makefile for tish
 PROGS = mpi-tish
 FC	= mpif90
-FC2=ifort
+FC2=gfortran
 FFLAGS	= -O
 
 SRC = calmat.f90 trialf.f90 others.f90 dclisb.f90 \
-	dclisb3.f90 formpi.f90 mpi-tish.f90
+	formpi.f90 mpi-tish.f90
 OBJS	= $(SRC:.f90=.o)
 .SUFFIXES: .f90 .o
 

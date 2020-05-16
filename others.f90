@@ -5,9 +5,9 @@ subroutine pinput2( maxnlay,maxnzone,maxnr,&
     re,ratc,ratl,tlen,np,omegai,imin,imax,&
     nzone,vrmin,vrmax,rho,vsv,vsh,qmu,&
     r0,eqlat,eqlon,mt,nr,theta,phi,lat,lon,output)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Parameter Input
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Parameter Input
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
     integer:: maxnlay,maxnzone,maxnr
     integer:: np
@@ -42,10 +42,10 @@ subroutine pinput2( maxnlay,maxnzone,maxnr,&
     open( unit=11, file=tmpfile, status='unknown' )
     !c reading the parameter
     read(11,*) tlen,np
-    read(11,*) re		! relative error (vertical grid)
-    read(11,*) ratc		! ampratio (vertical grid cut-off)
-    read(11,*) ratl		! ampratio (for l-cutoff)
-    read(11,*) omegai	! omegai
+    read(11,*) re ! relative error (vertical grid)
+    read(11,*) ratc ! ampratio (vertical grid cut-off)
+    read(11,*) ratl ! ampratio (for l-cutoff)
+    read(11,*) omegai ! omegai
     omegai = - dlog(omegai) / tlen
     !c
     read(11,*) imin,imax
@@ -83,7 +83,7 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calthetaphi(ievla,ievlo,istla,istlo,theta,phi)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
     double precision,parameter:: pi=3.1415926535897932d0
     !c
@@ -124,13 +124,12 @@ subroutine calthetaphi(ievla,ievlo,istla,istlo,theta,phi)
 end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine translat(geodetic,geocentric)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
     double precision,parameter::flattening = 1.d0 / 298.25d0
     double precision,parameter:: pi=3.1415926535897932d0
     double precision:: geocentric, geodetic
-      
-    double precision:: tmp
+
     integer:: flag
     !c      read(5,*) geodetic
     flag = 0
@@ -144,16 +143,15 @@ subroutine translat(geodetic,geocentric)
         * dtan(geodetic) )
     geocentric = geocentric * 1.8d2 / pi
     !c      if(geocentric < 0.d0 ) geocentric = 1.8d2 + geocentric
-    if(flag == 1) then
-        geocentric = 1.8d2 - geocentric
-    endif
+    if(flag == 1) geocentric = 1.8d2 - geocentric
+
     !c      write(6,*) 'geocentric latitude', geocentric
     return
 end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
     imax,lmin,tlen,vmin,gridpar,dzpar )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     double precision,parameter:: pi=3.1415926535897932d0
       !c
     integer:: nzone,imax,lmin
@@ -164,7 +162,7 @@ subroutine calgrid( nzone,vrmin,vrmax,vs,rmin,rmax,&
     !c
     do izone=1,nzone
         !c computing the S-velocity at each zone
-            v(:) = vs(:,izone)
+        v(:) = vs(:,izone)
         vs1 = 0.d0
         vs2 = 0.d0
         do j=1,4
@@ -221,30 +219,25 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calra( maxnlay,maxnzone,&
-    nlayer,&
-    gridpar,dzpar,nzone,vrmin,vrmax,&
+    nlayer,gridpar,dzpar,nzone,vrmin,vrmax,&
     rmin,rmax,nnl,ra,re )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the number and the location of grid points.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing the number and the location of grid points.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
     double precision,parameter:: pi=3.1415926535897932d0
     !c
     integer:: maxnlay,maxnzone
     integer:: nlayer
     integer:: nzone,nnl(maxnzone)
-    double precision:: gridpar(*),dzpar(*),vrmin(*),vrmax(*),rmin,rmax,r0
+    double precision:: gridpar(*),dzpar(*),vrmin(*),vrmax(*),rmin,rmax
     double precision:: ra(maxnlay+maxnzone+1)
     integer:: izone,itmp,i,ntmp
     double precision:: rh,re
     !c
     !c Initializing the data
-    do i=1,maxnlay+maxnzone+1
-        ra(i) = 0.d0
-    enddo
-    do izone=1,nzone
-        nnl(izone) = 0
-    enddo
+    ra(1:maxnlay+maxnzone+1) = 0.d0
+    nnl(1:nzone) = 0
     !c
     !c computing the number and the location of the grid points
     ra(1) = rmin
@@ -339,9 +332,9 @@ end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calspo( ndc,rdc,nlayer,r0,rmin,rmax,ra,&
     isp,spo,spn )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the source location.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing the source location.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     integer:: ndc,nlayer,isp(*),spn
     double precision:: rdc(*),r0,rmin,rmax,ra(*),spo
     integer:: itmp
@@ -355,42 +348,42 @@ subroutine calspo( ndc,rdc,nlayer,r0,rmin,rmax,ra,&
     !c	  write(6,*) 'r0 is changed to ',r0,spo
     else
         itmp = 2
-110 continue
-    if ( r0<ra(itmp) ) then
-    continue
-else
-    itmp = itmp + 1
-    goto 110
-endif
-spo = dble(itmp-2) + ( r0-ra(itmp-1) ) / ( ra(itmp)-ra(itmp-1) )
-!c temporal handling
-if ( (spo-dble(itmp-2))<0.01d0 ) then
-    spo = dble(itmp-2) + 0.01d0
-    r0 = ra(itmp-1) + (spo-dble(itmp-2)) * ( ra(itmp)-ra(itmp-1) )
-!c	    write(6,*) 'r0 is changed to ',r0,spo
-endif
-if ( (spo-dble(itmp-2))>0.99d0 ) then
-    spo = dble(itmp-2) + 0.99d0
-    r0 = ra(itmp-1) + (spo-dble(itmp-2)) * ( ra(itmp)-ra(itmp-1) )
-!c	    write(6,*) 'r0 is changed to ',r0,spo
-endif
+110     continue
+        if ( r0<ra(itmp) ) then
+            continue
+        else
+            itmp = itmp + 1
+            goto 110
+        endif
+        spo = dble(itmp-2) + ( r0-ra(itmp-1) ) / ( ra(itmp)-ra(itmp-1) )
+        !c temporal handling
+        if ( (spo-dble(itmp-2))<0.01d0 ) then
+            spo = dble(itmp-2) + 0.01d0
+            r0 = ra(itmp-1) + (spo-dble(itmp-2)) * ( ra(itmp)-ra(itmp-1) )
+        !c	    write(6,*) 'r0 is changed to ',r0,spo
+        endif
+        if ( (spo-dble(itmp-2))>0.99d0 ) then
+            spo = dble(itmp-2) + 0.99d0
+            r0 = ra(itmp-1) + (spo-dble(itmp-2)) * ( ra(itmp)-ra(itmp-1) )
+        !c	    write(6,*) 'r0 is changed to ',r0,spo
+        endif
 !c
-endif
+    endif
 !c computing 'spn'
-spn = 0
-itmp = 1
+    spn = 0
+    itmp = 1
 120 continue
     spn = spn + 1
-    if ( r0.le.rdc(itmp) ) then
-    continue
-else
-    itmp = itmp + 1
-    goto 120
-endif
-!c changing 'spo'
-spo = spo - dble( isp(spn) - 1 )
-!c
-return
+    if ( r0<=rdc(itmp) ) then
+        continue
+    else
+        itmp = itmp + 1
+        goto 120
+    endif
+    !c changing 'spo'
+    spo = spo - dble( isp(spn) - 1 )
+    !c
+    return
 end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -450,9 +443,9 @@ end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calgstg( spn,rrho,vsv,vsh,&
     ra,vra,rmax,rho,ecL,ecN,r0,mu0 )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the structure grid points.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing the structure grid points.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
     integer:: spn
     double precision:: rrho(4,*),vsv(4,*),vsh(4,*)
@@ -521,9 +514,9 @@ end
 
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calcutd(nzone,nnl,tmpr,rat,nn,ra,kc)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     implicit none
-    integer:: nzone,nn,spn,kc,nnl(*)
+    integer:: nzone,nn,kc,nnl(*)
     !c	complex(kind(0d0)) tmpc(*)
     complex(kind(0d0)):: tmpr(*)
     double precision:: rat,ra(*)

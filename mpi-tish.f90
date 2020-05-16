@@ -43,8 +43,8 @@ program tish
     !c variable for the periodic range
     integer:: np,imin,imax
     double precision:: tlen,omega,omegai
+    complex(kind(0d0))::comega2
     complex(kind(0d0)):: u(3,maxnr)
-    double precision :: stime,etime
     !c variable for the source
     integer:: spn,ns
     double precision:: r0,mt(3,3),spo,mu0,eqlat,eqlon
@@ -67,7 +67,7 @@ program tish
     !c variable for the stack point
     integer:: isp(maxnzone),jsp(maxnzone),ins
     !c other variables
-    integer:: i,j,ii,jj,nn,lda,ier
+    integer:: i,j,ii,nn,lda,ier
     double precision:: eps,work( 4*maxnlay ),lsq
     complex(kind(0d0)):: dr(maxnlay+1),z(maxnlay+1)
     complex(kind(0d0)):: cwork( 4*maxnlay )
@@ -81,16 +81,16 @@ program tish
     integer::petot,my_rank,ierr,ista
     complex(kind(0d0)), allocatable, dimension(:,:,:) :: outputu
     integer, allocatable, dimension (:) :: mpimin, mpimax
-	
+
     call mpi_init (ierr)
     call MPI_COMM_SIZE (MPI_COMM_WORLD, PETOT, ierr)
     call MPI_COMM_RANK (MPI_COMM_WORLD, my_rank, ierr)
- 
+
     !ccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     allocate(mpimin(PETOT), mpimax(PETOT))
     !cccccccccccccccccccccccccccccccccccccccccccccccc
-	
- 
+
+
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     !c *************** Inputting and computing the parameters ***************
     !c --- inputting parameter ---
@@ -145,23 +145,23 @@ program tish
         0, MPI_COMM_WORLD, ierr)
     !ccccccccccccccccccccccccccccccccccccccccccccc
     allocate (outputu(3,nr,0:np))
- 
-	
+
+
     !ccccccccccccccccccccccccccccccccccccccccccccccc
-	
+
     !c --- computing the required parameters ---
     !c computing and checking the parameters
     rmin = vrmin(1)
     rmax = vrmax(nzone)
     ndc = nzone - 1
- 
+
     do ir=1,nr
         theta(ir)= theta(ir) / 1.8d2 * pi
         phi(ir)= phi(ir) / 1.8d2 * pi
     enddo
     if (  r0<rmin  .or.  rmax<r0  ) stop 'Location of the source is improper.'
 
- 
+
     iimax = imax
     if( (rmax-r0)<shallowdepth) then ! option for shallow events
         !c computing of the number and the location of grid points
@@ -202,16 +202,16 @@ program tish
                 ra( isp(i) ),h4( jsp(i) ),work( jsp(i) ) )
             call caltl( nlayer(i),vnp,vra,rho,&
                 ra( isp(i) ),work( jsp(i) ) )
-            call calt( nlayer(i),  t( jsp(i) ),  work( jsp(i) ),&
-                t( jsp(i) ) )
+            t(jsp(i):jsp(i)+4*nlayer(i)-1)=(t(jsp(i):jsp(i)+4*nlayer(i)-1)&
+             +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
             call calhl( nlayer(i),vnp,vra,ecL,&
                 ra( isp(i) ),work( jsp(i) ) )
-            call calt( nlayer(i), h3( jsp(i) ), work( jsp(i) ),&
-                h3( jsp(i) ) )
+            h3(jsp(i):jsp(i)+4*nlayer(i)-1)=(h3(jsp(i):jsp(i)+4*nlayer(i)-1)&
+             +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
             call calhl( nlayer(i),vnp,vra,ecN,&
                 ra( isp(i) ),work( jsp(i) ) )
-            call calt( nlayer(i), h4( jsp(i) ), work( jsp(i) ),&
-                h4( jsp(i) ) )
+            h4(jsp(i):jsp(i)+4*nlayer(i)-1)=(h4(jsp(i):jsp(i)+4*nlayer(i)-1)&
+             +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
         enddo
         call calmatc( 2,3,gvra,grho,2,0,0,gra,gt, work )
         call calmatc( 2,3,gvra,gecL ,2,1,1,gra,gh1,work )
@@ -219,18 +219,19 @@ program tish
         call calmatc( 2,3,gvra,gecL ,0,0,0,gra,gh3,work )
         call calmatc( 2,3,gvra,gecN ,0,0,0,gra,gh4,work )
         call caltl( 2,3,gvra,grho,gra,work )
-        call calt( 2,  gt, work, gt )
+        gt(1:8)=(gt(1:8)+work(1:8))/2d0
         call calhl( 2,3,gvra,gecL, gra,work )
-        call calt( 2, gh3, work, gh3 )
+        gh3(1:8)=(gh3(1:8)+work(1:8))/2d0
         call calhl( 2,3,gvra,gecN, gra,work )
-        call calt( 2, gh4, work, gh4 )
+        gh4(1:8)=(gh4(1:8)+work(1:8))/2d0
+
         !c
         nn = nnlayer + 1
         ns = isp(spn) + dint(spo)
         ins = 4 * ns - 3
         !c
         llog = 0
-        do ii=1,2	! omega-loop
+        do ii=1,2 ! omega-loop
             if(ii==1) then
                 if(imin==0) then
                     i=1
@@ -240,21 +241,22 @@ program tish
             endif
             if(ii==2) i=imax
             omega = 2.d0 * pi * dble(i) / tlen
+            comega2 = dcmplx( omega, -omegai ) * dcmplx( omega, -omegai )
             call callsuf(omega,nzone,vrmax,vsv,lsuf)
             call calcoef( nzone,omega,qmu,coef )
             !c
             a0(:,1:nn)=0
             a2(:,1:nn)=0
             do j=1,ndc+1
-                call cala0( nlayer(j),omega,omegai,&
-                    t(jsp(j)), h1(jsp(j)),&
-                    h2(jsp(j)), h3(jsp(j)),&
-                    h4(jsp(j)),&
-                    coef(j), cwork(jsp(j)) )
+             !c Computing the coefficient matrix 'a' in the solid part. cala0
+                cwork(jsp(j):jsp(j)+4*nlayer(j)-1)= &
+                 comega2*dcmplx(t(jsp(j):jsp(j)+4*nlayer(j)-1))&
+                -coef(j)*dcmplx(h1(jsp(j):jsp(j)+4*nlayer(j)-1)-h2(jsp(j):jsp(j)+4*nlayer(j)-1)&
+                +h3(jsp(j):jsp(j)+4*nlayer(j)-1)-2d0*h4(jsp(j):jsp(j)+4*nlayer(j)-1))
+
                 call overlap( nlayer(j),cwork(jsp(j)),&
                     a0( 1,isp(j) ) )
-                call cala2( nlayer(j),h4(jsp(j)),&
-                    coef(j), cwork(jsp(j)) )
+                cwork(jsp(j):jsp(j)+4*nlayer(j)-1)=-coef(j)*dcmplx( h4(jsp(j):jsp(j)+4*nlayer(j)-1) )
                 call overlap( nlayer(j),cwork(jsp(j)),&
                     a2( 1,isp(j) ) )
             enddo
@@ -263,7 +265,7 @@ program tish
             ismall = 0
             maxamp = -1.d0
             ltmp(ii) = maxlmax
-            do l=0,maxlmax	! l-loop
+            do l=0,maxlmax ! l-loop
                 if( 20<ismall  ) then
                     if(ltmp(ii)>l) ltmp(ii) = l
                     exit
@@ -275,12 +277,16 @@ program tish
                 !c --- Initializing the matrix elements
                 a(:,1:nn)=0
                 ga2=0
-                call cala( nn,l,lda,a0,a2,a )
-                call calga( 1,omega,omegai,l,&
-                    t(ins),h1(ins),h2(ins),h3(ins),h4(ins),&
-                    coef(spn),aa )
-                call calga( 2,omega,omegai,l,gt,gh1,gh2,gh3,gh4,&
-                    coef(spn),ga )
+                !c Computing the coefficient matrix 'a' in the solid part. cala
+                a(1:2,1:nn) = a0(1:2,1:nn) + dcmplx(l*(l+1)) * a2(1:2,1:nn)
+
+                !c Computing the coefficient matrix 'a' in the solid part. calga
+                aa(1:4) = comega2 * t(ins:ins+3)&
+                - coef(spn) * dcmplx( h1(ins:ins+3)-h2(ins:ins+3)+h3(ins:ins+3)+dble(l*(l+1)-2)*h4(ins:ins+3) )
+                ga(1:8)=comega2*gt(1:8)&
+                - coef(spn)*dcmplx( gh1(1:8)-gh2(1:8)+gh3(1:8)+dble(l*(l+1)-2)*gh4(1:8) )
+
+
                 call overlap( 2,ga,ga2 )
                 if( mod(l,100)==0) then
                     call dclisb0_pretreatment( a,nn,1,lda,g,eps,dr,z,ier)
@@ -288,7 +294,7 @@ program tish
                     call dclisb_pretreatment( a,nn,1,lda,g,eps,dr,z,ier)
                 endif
                 !c
-                do m=-2,2	! m-loop
+                do m=-2,2 ! m-loop
                     if(m==0)cycle
                     if (l<abs(m))cycle
                     g(1:nn)=0
@@ -302,16 +308,15 @@ program tish
                             g(kc),eps,dr,z,ier)
                     endif
                     !c
-                    if( mod(l,100)==0) then
-                        call calcutd(nzone,nlayer,tmpr,ratc,nn,ra,kc)
-                    endif
+                    if( mod(l,100)==0) &
+                     call calcutd(nzone,nlayer,tmpr,ratc,nn,ra,kc)
                     !c
                     call calamp(g(nn),l,lsuf,maxamp,ismall,ratl)
-                enddo          ! m-loop
-            enddo             ! l-loop
-        enddo		! omega-loop
+                enddo ! m-loop
+            enddo ! l-loop
+        enddo ! omega-loop
         iimax = dble(max(ltmp(1),ltmp(2))) * tlen / lmaxdivf
-    endif			! option for shallow events
+    endif ! option for shallow events
     !c
     !c computing of the number and the location of grid points
     call calgrid( nzone,vrmin,vrmax,vsv,rmin,rmax,&
@@ -348,11 +353,14 @@ program tish
         call calmatc( nlayer(i),vnp,vra,ecN,0,0,0,&
             ra(isp(i)),h4(jsp(i)),work(jsp(i)))
         call caltl(nlayer(i),vnp,vra,rho,ra(isp(i)),work(jsp(i)))
-        call calt(nlayer(i),t(jsp(i)),work(jsp(i)),t(jsp(i)))
+        t(jsp(i):jsp(i)+4*nlayer(i)-1)=(t(jsp(i):jsp(i)+4*nlayer(i)-1)&
+        +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
         call calhl(nlayer(i),vnp,vra,ecL,ra(isp(i)),work(jsp(i)))
-        call calt(nlayer(i),h3(jsp(i)),work(jsp(i)),h3(jsp(i)))
+        h3(jsp(i):jsp(i)+4*nlayer(i)-1)=(h3(jsp(i):jsp(i)+4*nlayer(i)-1)&
+        +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
         call calhl(nlayer(i),vnp,vra,ecN,ra(isp(i)),work(jsp(i)))
-        call calt(nlayer(i),h4(jsp(i)),work(jsp(i)),h4(jsp(i)))
+        h4(jsp(i):jsp(i)+4*nlayer(i)-1)=(h4(jsp(i):jsp(i)+4*nlayer(i)-1)&
+        +work(jsp(i):jsp(i)+4*nlayer(i)-1))/2d0
     enddo
     call calmatc( 2,3,gvra,grho,2,0,0,gra,gt, work )
     call calmatc( 2,3,gvra,gecL ,2,1,1,gra,gh1,work )
@@ -360,12 +368,12 @@ program tish
     call calmatc( 2,3,gvra,gecL ,0,0,0,gra,gh3,work )
     call calmatc( 2,3,gvra,gecN ,0,0,0,gra,gh4,work )
     call caltl( 2,3,gvra,grho,gra,work )
-    call calt( 2,  gt, work, gt )
+    gt(1:8)=(gt(1:8)+work(1:8))/2d0
     call calhl( 2,3,gvra,gecL, gra,work )
-    call calt( 2, gh3, work, gh3 )
+    gh3(1:8)=(gh3(1:8)+work(1:8))/2d0
     call calhl( 2,3,gvra,gecN, gra,work )
-    call calt( 2, gh4, work, gh4 )
-    !c
+    gh4(1:8)=(gh4(1:8)+work(1:8))/2d0
+
     !c ******************** Computing the displacement *********************
     nn = nnlayer + 1
     ns = isp(spn) + dint(spo)
@@ -376,16 +384,17 @@ program tish
     !ccccccccc MPIccccccccccccccccccccccccccc
 
     !c	write(*,*) imin, "  ", imax, "  ",iamari
-	
+
     !c	call simplesplit (imin, imax, PETOT, mpimin, mpimax)
     call trianglesplit (imin, imax, PETOT, mpimin, mpimax)
 
-  
+
     do i= mpimin(my_rank+1), mpimax(my_rank+1)! omega-loop
 !        call cpu_time(stime)
         u(:,1:nr)=0
         if ( i/=0 ) then
             omega = 2.d0 * pi * dble(i) / tlen
+            comega2 = dcmplx( omega, -omegai ) * dcmplx( omega, -omegai )
             call callsuf(omega,nzone,vrmax,vsv,lsuf)
             plm(:,:,1:nr)=0
             call calcoef( nzone,omega,qmu,coef )
@@ -393,14 +402,14 @@ program tish
             a0(:,1:nn)=0
             a2(:,1:nn)=0
             do j=1,ndc+1
-                call cala0( nlayer(j),omega,omegai,&
-                    t(jsp(j)), h1(jsp(j)),&
-                    h2(jsp(j)), h3(jsp(j)),&
-                    h4(jsp(j)), coef(j), cwork(jsp(j)) )
+                !c Computing the coefficient matrix 'a' in the solid part. cala0
+                cwork(jsp(j):jsp(j)+4*nlayer(j)-1)= &
+                 comega2*dcmplx(t(jsp(j):jsp(j)+4*nlayer(j)-1))&
+                -coef(j)*dcmplx(h1(jsp(j):jsp(j)+4*nlayer(j)-1)-h2(jsp(j):jsp(j)+4*nlayer(j)-1)&
+                +h3(jsp(j):jsp(j)+4*nlayer(j)-1)-2d0*h4(jsp(j):jsp(j)+4*nlayer(j)-1))
                 call overlap( nlayer(j),cwork(jsp(j)),&
                     a0( 1,isp(j) ) )
-                call cala2( nlayer(j),h4(jsp(j)),&
-                    coef(j), cwork(jsp(j)) )
+                cwork(jsp(j):jsp(j)+4*nlayer(j)-1)=-coef(j)*dcmplx( h4(jsp(j):jsp(j)+4*nlayer(j)-1) )
                 call overlap( nlayer(j),cwork(jsp(j)),&
                     a2( 1,isp(j) ) )
             enddo
@@ -409,7 +418,7 @@ program tish
             ismall = 0
             maxamp = -1.d0
             llog = maxlmax
-            do l=0,maxlmax	! l-loop
+            do l=0,maxlmax ! l-loop
                 if( ismall>20 ) then
                     if(llog>l) llog = l
                     cycle
@@ -427,12 +436,19 @@ program tish
                 a(1:2,1:nn)=0
                 ga2=0
 
-                call cala( nn,l,lda,a0,a2,a )
-                call calga( 1,omega,omegai,l,&
-                    t(ins),h1(ins),h2(ins),h3(ins),h4(ins),&
-                    coef(spn),aa )
-                call calga( 2,omega,omegai,l,gt,gh1,gh2,gh3,gh4,&
-                    coef(spn),ga )
+                !c Computing the coefficient matrix 'a' in the solid part. cala
+                a(1:2,1:nn) = a0(1:2,1:nn) + dcmplx(l*(l+1)) * a2(1:2,1:nn)
+
+                !c Computing the coefficient matrix 'a' in the solid part. calga
+                aa(1:4) = comega2 * dcmplx( t(ins:ins+3))&
+                - coef(spn) * dcmplx( h1(ins:ins+3)-h2(ins:ins+3)+h3(ins:ins+3)+dble(l*(l+1)-2)*h4(ins:ins+3) )
+                ga(1:8) = comega2 * dcmplx( gt(1:8))&
+                - coef(spn) * dcmplx( gh1(1:8)-gh2(1:8)+gh3(1:8)+dble(l*(l+1)-2)*gh4(1:8) )
+
+
+
+
+
                 call overlap( 2,ga,ga2 )
 
                 if( mod(l,100)==0) then
@@ -443,7 +459,7 @@ program tish
                 endif
 
                 !c
-                do m=-2,2	! m-loop
+                do m=-2,2 ! m-loop
                     if(m==0)cycle
                     if(l<abs(m))cycle
                     g(1:nn)=0
@@ -461,7 +477,6 @@ program tish
                     !c
                     call calamp(g(nn),l,lsuf,maxamp,ismall,ratl)
                     u(2:3,1:nr) = u(2:3,1:nr) + g(nn) * bvec(2:3,m,1:nr) / lsq
-
                 enddo          ! m-loop
             enddo             ! l-loop
         endif
@@ -490,12 +505,10 @@ program tish
         !c ************************** Files Handling **************************
         do ir = 1 ,nr
             open(unit=10,file=trim(output(ir)),&
-                status='unknown',&
-                form='binary', convert='big_endian')
-            write(10) tlen
-            write(10) np,1,3
+            status='unknown', form='unformatted',&
+           access='stream', convert='big_endian')
+            write(10) tlen,np,1,3
             write(10) omegai,lat(ir),lon(ir)
-            !c       write(11,*) theta(ir)*1.8d2/pi,phi(ir)*1.8d2/pi
             write(10) eqlat,eqlon,r0
             do i= imin, imax
                 write(10) i,&
@@ -508,10 +521,10 @@ program tish
             enddo
             close(10)
         enddo
- 
+
     endif
 
-  
+
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     write(*,*) my_rank, "Ivalice looks to the horizon!"
     call MPI_BARRIER(MPI_COMM_WORLD, ierr)

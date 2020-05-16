@@ -2,13 +2,14 @@
 subroutine calbveczero( l,bvec )
     implicit none
     double precision, parameter ::  pi=3.1415926535897932d0
-	
-    integer::  l,m,i
+
+    integer,intent(in):: l
+    integer::m,i
     double precision :: fact,coef,xl2
     complex(kind(0d0)) :: bvec(1:3,-2:2)
 
     xl2 = dble(l) * dble(l+1)
-	bvec(1,:)=0
+    bvec(1,:)=0
     do m=0,min0(l,1)
         fact = 1.d0
         if ( m/=0 ) then

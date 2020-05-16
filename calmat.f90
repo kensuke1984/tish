@@ -1,15 +1,15 @@
 !C calmat.f for wcalprem.f
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calmatc(nlayer,vnp,vra,con,rpow,w1dn,w2dn,ra,m,work)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing \int r^rpow con W_p^(w1dn) W_q^(w2dn) dr.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing \int r^rpow con W_p^(w1dn) W_q^(w2dn) dr.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer:: maxrpow
     parameter ( maxrpow = 2 )
-    !c
-    integer:: nlayer,vnp,rpow,w1dn,w2dn
+    integer,intent(in):: nlayer,vnp,rpow,w1dn,w2dn
     double precision:: vra(vnp),con(vnp),ra(*),m(*),work(*)
-    integer:: i,j,k,kk,l,nn,snp
+    integer:: i,j,k,l,nn,snp
     double precision:: a(2,2),b(2,2),c(5),rh
     !c parameter check
     if (maxrpow<rpow) stop 'Invalid arguments.(calmatc)'
@@ -29,7 +29,7 @@ subroutine calmatc(nlayer,vnp,vra,con,rpow,w1dn,w2dn,ra,m,work)
                 a(2,2) = 0.d0
                 a(1,2) = 1.d0 / rh
             else
-                pause 'Invalid arguments.(calmatc)'
+                stop 'Invalid arguments.(calmatc)'
             endif
         endif
         if ( w2dn == 0 ) then
@@ -49,9 +49,7 @@ subroutine calmatc(nlayer,vnp,vra,con,rpow,w1dn,w2dn,ra,m,work)
         endif
         do  j=1,2
             do   k=1,2
-                do kk=1,5
-                    c(kk) = 0.d0
-                enddo
+                c(1:5) = 0.d0
 
                 call pmulti( 2,a(1,j),2,b(1,k),3,c )
                 do  l=3,1,-1
@@ -76,9 +74,7 @@ subroutine calmatc(nlayer,vnp,vra,con,rpow,w1dn,w2dn,ra,m,work)
             endif
         enddo
     else
-        do   i=1,4*nlayer
-            m(i) = work(i)
-        enddo
+        m(1:4*nlayer) = work(1:4*nlayer)
     endif
     !c
     return
@@ -86,9 +82,10 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine caltl( nlayer,vnp,vra,rho,ra,tl)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing of lumped mass matrix.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing of lumped mass matrix.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer:: nlayer,vnp
     double precision:: vra(vnp),rho(vnp),ra(*),tl(*)
     integer:: i,nn,snp
@@ -119,9 +116,10 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calhl( nlayer,vnp,vra,mu,ra,hl)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing of lumped rigidity matrix.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing of lumped rigidity matrix.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer:: nlayer,vnp
     double precision:: vra(vnp),mu(vnp),ra(*),hl(*)
     integer:: i,nn,snp
@@ -147,33 +145,20 @@ subroutine calhl( nlayer,vnp,vra,mu,ra,hl)
     !c
     return
 end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine calt( nlayer, tl, tc, t )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nlayer, i
-    double precision:: t(*), tl(*), tc(*)
-    !c
-    do i=1,4*nlayer
-        t(i) = ( tl(i) + tc(i) ) / 2.d0
-    enddo
-    !c
-    return
-end
-!c
+
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine pmulti(n,a,m,b,l,c)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the (l-1) degrees polynomial c(n) which is the product of
-    !c (n-1) degrees polynomial a(n) and (m-1) degrees polynomial b(n).
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Computing the (l-1) degrees polynomial c(n) which is the product of
+!c (n-1) degrees polynomial a(n) and (m-1) degrees polynomial b(n).
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     integer:: n,m,l,i,j
     double precision:: a(n),b(m),c(l)
     !c
     if (n+m-1/=l) stop 'Invalid arguments.(pmulti)'
-    do i=1,l
-        c(i)=0.d0
-    enddo
+
+    c(1:l)=0.d0
+
     do i=1,n
         do j=1,m
             c(i+j-1) = c(i+j-1) + a(i)*b(j)
@@ -182,13 +167,14 @@ subroutine pmulti(n,a,m,b,l,c)
     !c
     return
 end
-!c
+
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine pinteg(snp,n,p,from,to,vnp,vra,con,pint)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Evaluating the integrated value pint from 'from' to 'to' of p(n)*con
-    !c which is the product of (n-1) degrees polynomial 'p(n)' and 'con'.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Evaluating the integrated value pint from 'from' to 'to' of p(n)*con
+!c which is the product of (n-1) degrees polynomial 'p(n)' and 'con'.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer:: maxn
     parameter ( maxn = 5 )
     !c
@@ -228,10 +214,11 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine polint( n,p,x1,x2,pint )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Evaluating the integrated value 'pint' from 'x1' to 'x2'
-    !c of (n-1) degrees polynomial 'p(n)'.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Evaluating the integrated value 'pint' from 'x1' to 'x2'
+!c of (n-1) degrees polynomial 'p(n)'.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer,parameter:: maxn=6
     !c
     integer:: n
@@ -262,135 +249,24 @@ subroutine polint( n,p,x1,x2,pint )
     !c
     return
 end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine cala0( nlayer,omega,omegai,t,h1,h2,h3,h4,coef,a0 )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the coefficient matrix 'a' in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nlayer
-    double precision:: omega,omegai
-    double precision:: t(*)
-    double precision:: h1(*),h2(*),h3(*),h4(*)
-    complex(kind(0d0)) comega2,coef,a0(*)
-    integer:: i
-    double precision:: h
-    !c
-    comega2 = dcmplx( omega, -omegai ) * dcmplx( omega, -omegai )
-    do i=1,4*nlayer
-        h = h1(i) - h2(i) + h3(i) - 2.d0 * h4(i)
-        a0(i) = comega2 * dcmplx( t(i) ) - coef * dcmplx( h )
-    enddo
-    !c
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine cala2( nlayer,h4,coef,a2 )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the coefficient matrix 'a' in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nlayer
-    double precision:: h4(*)
-    complex(kind(0d0)):: coef,a2(*)
-    integer:: i
-    !c
-    do i=1,4*nlayer
-        a2(i) = - coef * dcmplx( h4(i) )
-    enddo
-    !c
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine cala( nn,l,lda,a0,a2,a )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the coefficient matrix 'a' in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    integer:: nn,l,lda
-    complex*16 a0(lda,*),a2(lda,*),a(lda,*)
-    integer:: i,j
-    double precision:: xl2
-    !c
-    xl2 = dble(l) * dble(l+1)
-    do j=1,nn
-        do i=1,2
-            a(i,j) = a0(i,j) + dcmplx(xl2) * a2(i,j)
-        enddo
-    enddo
-    return
-end
-!c
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine calga(nlayer,omega,omegai,l,t,h1,h2,h3,h4,coef,a)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the coefficient matrix 'a' in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    implicit none
-    integer:: nlayer,l
-    double precision:: omega,omegai
-    double precision:: t(*)
-    double precision:: h1(*),h2(*),h3(*),h4(*)
-    complex(kind(0d0)):: comega2,coef,a(*)
-    integer:: i
-    double precision:: h,xl2m2
-    !c
-    h = 0
-    do i=1,4*nlayer
-        a(i) = 0.d0
-    enddo
-    comega2 = dcmplx( omega, -omegai ) * dcmplx( omega, -omegai )
-    xl2m2 = dble(l) * dble(l+1) -2.d0
-    do  i=1,4*nlayer
-        h = h1(i) - h2(i) + h3(i) + xl2m2 * h4(i)
-        a(i) = comega2 * dcmplx( t(i) ) - coef * dcmplx( h )
-    enddo
-    return
-end
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine calga2(nlayer,omega,omegai,l,t,h1,h2,h3,coef,a)
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Computing the coefficient matrix 'a' in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    implicit none
-    integer:: nlayer,l
-    double precision:: omega,omegai
-    double precision:: t(*)
-    double precision:: h1(*),h2(*),h3(*)
-    complex*16 comega2,coef,a(*)
-    integer:: i
-    double precision:: h,xl2m1
-    !c
-    h = 0.d0
-    do i=1,4*nlayer
-        a(i) = 0.d0
-    enddo
-    comega2 = dcmplx( omega, -omegai ) * dcmplx( omega, -omegai )
-    xl2m1 = dble(l) * dble(l+1) -1.d0
-    do i=1,4*nlayer
-        h = h1(i) - h2(i) + xl2m1 * h3(i)
-        a(i) = comega2 * dcmplx( t(i) ) - coef * dcmplx( h )
-    enddo
-    return
-end
-!c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine overlap( nlayer,a,a2 )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c Overlapping the coefficient matrix elements in the solid part.
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c Overlapping the coefficient matrix elements in the solid part.
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     integer:: nlayer
-    complex*16 a(*),a2(2,*)
+    complex(kind(0d0)):: a(*),a2(2,*)
     integer:: i,j,k,mu,m,i1,i2,k1,k2,nsize
     !c
     !c
     nsize = nlayer+1
     mu = 1
     m = mu + 1
-    do   j=1,nsize
+    do j=1,nsize
         i1 = max0(1,j-mu)
         i2 = j
-        do   i=i1,i2
+        do i=i1,i2
             k = i - j + m
             if ( i==j ) then
                 if ( i==1 ) then
@@ -417,9 +293,10 @@ end
 !c
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calg2( l,m,spo,r0,mt,mu0,coef,ga,a,ga2,dr,g2 )
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    implicit none
     double precision,parameter:: pi=3.1415926535897932d0
-    !c
+
     integer:: l,m
     double precision:: spo,r0,mt(3,3),mu0
     complex*16 coef,ga(*),a(*),ga2(2,*),g2(*)
