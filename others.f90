@@ -1,86 +1,81 @@
-!c others.f for wcalprem.f
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-subroutine pinput2( maxnlay,maxnzone,maxnr,&
-    re,ratc,ratl,tlen,np,omegai,imin,imax,&
-    nzone,vrmin,vrmax,rho,vsv,vsh,qmu,&
+!v0.1.0 Kensuke Konishi
+subroutine pinput_tish(parameter_file, &
+    re,ratc,ratl,tlen,np,omegai,imin,imax, &
+    nzone,vrmin,vrmax,rho,vsv,vsh,qmu, &
     r0,eqlat,eqlon,mt,nr,theta,phi,lat,lon,output)
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!c Parameter Input
-!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!------------------------------------------------------------------------
+! Parameter Input
+!------------------------------------------------------------------------
+    use parameters
     implicit none
-    integer:: maxnlay,maxnzone,maxnr
-    integer:: np
-    integer:: imin,imax
-    integer:: nzone,nr
-    double precision:: tlen,omegai,re,ratc,ratl
-    double precision:: vrmin(*),vrmax(*),rho(4,*),vsv(4,*),vsh(4,*)
-    double precision:: qmu(*)
-    double precision:: r0,mt(3,3),theta(*),phi(*),lat(*),lon(*)
-    double precision:: eqlat,eqlon,stlat,stlon,eqlattmp
-    character(80):: output(*)
-    integer:: i
-    character(80):: dummy,tmpfile
-    !c
-    data tmpfile / 'worksh' /
-    !c
-    !c temporary file open
-    open( unit=11, file=tmpfile, status='unknown' )
-!c writing to the temporary file
-100 continue
-    read(5,110) dummy
-110 format(a80)
-    if ( dummy(1:1)=='c' ) goto 100
-    if ( dummy(1:3)=='end' ) goto 120
-    write(11,110) dummy
-    goto 100
-120 continue
-    !c temporary file close
-    close(11)
-    !c
-    !c temporary file open
-    open( unit=11, file=tmpfile, status='unknown' )
-    !c reading the parameter
-    read(11,*) tlen,np
-    read(11,*) re ! relative error (vertical grid)
-    read(11,*) ratc ! ampratio (vertical grid cut-off)
-    read(11,*) ratl ! ampratio (for l-cutoff)
-    read(11,*) omegai ! omegai
-    omegai = - dlog(omegai) / tlen
-    !c
-    read(11,*) imin,imax
-    read(11,*) nzone
-    if ( nzone>maxnzone ) stop 'nzone is too large. (pinput)'
-    do  i=1,nzone
-        read(11,*) vrmin(i),vrmax(i),&
-            rho(1,i),rho(2,i),rho(3,i),rho(4,i),&
-            vsv(1,i), vsv(2,i), vsv(3,i), vsv(4,i),&
-            vsh(1,i), vsh(2,i), vsh(3,i), vsh(4,i), qmu(i)
+    character*160, intent(in) :: parameter_file
+    integer, intent(out):: np,imin,imax,nzone,nr
+    real(dp),intent(out) :: tlen,omegai,re,ratc,ratl
+    real(dp),dimension(maxnzone), intent(out):: vrmin,vrmax,qmu
+    real(dp),dimension(4,maxnzone), intent(out):: rho,vsv,vsh
+    real(dp),dimension(maxnr), intent(out) :: theta,phi,lat,lon
+    real(dp),intent(out) :: eqlat,eqlon,r0,mt(3,3)
+    character*80,dimension(maxnr),intent(out) :: output
+    real(dp) :: stlat,stlon,eqlattmp
+    integer i,linenum,io
+    logical:: file_exists
+    character*80::buffer
+    character*80,dimension(1000) :: lines
+
+    inquire(file=parameter_file,exist=file_exists)
+    if (.not. file_exists) stop 'parameter file does not exist.'
+
+    linenum=0
+    open(unit=1,file=parameter_file,status='old',action='read')
+    do
+        read(1, '(a)', iostat=io) buffer
+        buffer = adjustl(buffer)
+        if(buffer(1:1)=='c'.or.buffer(1:1)=='c'.or.buffer(1:1)=='!') cycle
+        if(io/=0) exit
+        linenum=linenum+1
+        lines(linenum) = buffer
     enddo
-    !c source parameter
-    read(11,*) r0,eqlat,eqlon
-    eqlattmp = eqlat
+    close(1)
+
+    read(lines(1),*) tlen,np
+    read(lines(2),*) re ! relative error (vertical grid)
+    read(lines(3),*) ratc ! ampratio (vertical grid cut-off)
+    read(lines(4),*) ratl ! ampratio (for l-cutoff)
+    read(lines(5),*) omegai ! omegai
+    omegai = -dlog(omegai)/tlen
+    read(lines(6),*) imin,imax
+    read(lines(7),*) nzone
+    if (nzone > maxnzone) stop 'nzone is too large. (pinput)'
+
+! structure
+    do i=1,nzone
+        read(lines(7+3*(i-1)+1),*) vrmin(i),vrmax(i),rho(1:4,i)
+        read(lines(7+3*(i-1)+2),*) vsv(1:4,i)
+        read(lines(7+3*(i-1)+3),*) vsh(1:4,i),qmu(i)
+    enddo
+! source parameter
+    read(lines(3*nzone+8),*) r0,eqlat,eqlon
+    eqlattmp=eqlat
     call translat(eqlattmp,eqlattmp)
-    read(11,*) mt(1,1),mt(1,2),mt(1,3),mt(2,2),mt(2,3),mt(3,3)
-    read(11,*) nr
-    if ( nr>maxnr ) stop 'nr is too large. (pinput)'
+    read(lines(3*nzone+9),*) mt(1,1:3), mt(2,2:3), mt(3,3)
+    read(lines(3*nzone+10),*) nr
+! station
+    if (nr > maxnr) stop 'nr is too large. (pinput)'
     do i=1,nr
-        read(11,*) lat(i),lon(i)
+        read(lines(3*nzone+10+i),*) lat(i),lon(i)
         stlat = lat(i)
         stlon = lon(i)
         call translat(stlat,stlat)
         call calthetaphi(eqlattmp,eqlon,stlat,stlon,theta(i),phi(i))
     enddo
-    do  i=1,nr
-        read(11,110) output(i)
+    theta(1:nr) = theta(1:nr) / 1.8d2 * pi
+    phi(1:nr) = phi(1:nr) / 1.8d2 * pi
+    do i=1,nr
+        read(lines(3*nzone+10+nr+i),'(a)') output(i)
+        output(i)=trim(output(i))
     enddo
-    !c temporary file close
-    close(11)
-    !c
-    call unlink(tmpfile)
     return
-end
-!c
+    end
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 subroutine calthetaphi(ievla,ievlo,istla,istlo,theta,phi)
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

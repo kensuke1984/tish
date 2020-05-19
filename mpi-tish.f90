@@ -1,26 +1,19 @@
 program tish
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c  ************** mpi-tish.f ****************
-    !c Computation of SH synthetic seismograms
-    !c in transversely isotropic media for anisotropic PREM
-    !c using modified DSM operators & modified source representation.
-    !c Synthetics for shallow events can be computed.
-    !c
-    !c                                                 2002.10 K.Kawai
-    !c     2009. ?  Kensuke Konishi
-    !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-    !c ----------------------------<<constants>>----------------------------
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c  ************** mpi-tish.f ****************
+!c Computation of SH synthetic seismograms
+!c in transversely isotropic media for anisotropic PREM
+!c using modified DSM operators & modified source representation.
+!c Synthetics for shallow events can be computed.
+!c
+!c                                                 2002.10 K.Kawai
+!c     2009. ?  Kensuke Konishi
+!c v0.1.0
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!c ----------------------------<<constants>>----------------------------
+    use parameters
     implicit none
-    double precision:: pi,lmaxdivf,shallowdepth
-    integer:: maxnlay
-    integer:: maxnzone,maxnr,maxlmax
-    parameter ( pi=3.1415926535897932d0 )
-    parameter ( maxnlay = 88300 )
-    parameter ( maxnzone = 20 )
-    parameter ( maxnr = 600 )
-    parameter ( maxlmax = 80000 )
-    parameter ( lmaxdivf = 2.d4)
-    parameter ( shallowdepth = 100.d0 )
+    character(len=160) :: parameter_file
     !c ----------------------------<<variables>>----------------------------
     !c variable for the trial function
     integer:: nnlayer,nlayer(maxnzone)
@@ -47,7 +40,7 @@ program tish
     complex(kind(0d0)):: u(3,maxnr)
     !c variable for the source
     integer:: spn,ns
-    double precision:: r0,mt(3,3),spo,mu0,eqlat,eqlon
+    double precision::r0,mt(3,3),spo,mu0,eqlat,eqlon
     !c variable for the station
     integer:: nr,ir
     double precision,dimension(maxnr)::theta,phi,lat,lon
@@ -93,9 +86,11 @@ program tish
 
     !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     !c *************** Inputting and computing the parameters ***************
+   ! read input parameters
+    call get_command_argument(1, parameter_file)
     !c --- inputting parameter ---
     if (my_rank==0) then
-        call pinput2( maxnlay,maxnzone,maxnr,re,ratc,ratl,&
+        call pinput_tish( parameter_file,re,ratc,ratl,&
             tlen,np,omegai,imin,imax,nzone,vrmin,vrmax,rrho,vsv,vsh,qmu,&
             r0,eqlat,eqlon,mt,nr,theta,phi,lat,lon,output)
     endif
@@ -155,11 +150,7 @@ program tish
     rmax = vrmax(nzone)
     ndc = nzone - 1
 
-    do ir=1,nr
-        theta(ir)= theta(ir) / 1.8d2 * pi
-        phi(ir)= phi(ir) / 1.8d2 * pi
-    enddo
-    if (  r0<rmin  .or.  rmax<r0  ) stop 'Location of the source is improper.'
+    if ( r0<rmin .or. rmax<r0 ) stop 'Location of the source is improper.'
 
 
     iimax = imax
@@ -167,11 +158,9 @@ program tish
         !c computing of the number and the location of grid points
         iimax = int(tlen * 2.d0)
         call calgrid( nzone,vrmin,vrmax,vsv,rmin,rmax,&
-            iimax,1,tlen,&
-            vmin,gridpar,dzpar )
+            iimax,1,tlen,vmin,gridpar,dzpar )
         call calra ( maxnlay,maxnzone,&
-            nnlayer,&
-            gridpar,dzpar,nzone,vrmin,vrmax,&
+            nnlayer,gridpar,dzpar,nzone,vrmin,vrmax,&
             rmin,rmax,nlayer,ra,re )
         !c --- checking the parameter
         if ( nnlayer>maxnlay ) stop 'The number of grid points is too large.'

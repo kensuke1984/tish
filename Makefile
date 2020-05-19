@@ -1,12 +1,12 @@
-# makefile for tish
+# makefile for tish v0.1.0 Kensuke Konishi
 PROGS = mpi-tish
-FC	= mpif90
-FC2=gfortran
-FFLAGS	= -O
+FC = mpif90
+FC2 = gfortran
+FFLAGS = -O
 
-SRC = calmat.f90 trialf.f90 others.f90 dclisb.f90 \
-	formpi.f90 mpi-tish.f90 parameters.f90
-OBJS	= $(SRC:.f90=.o)
+SRC = parameters.f90 calmat.f90 trialf.f90 others.f90 dclisb.f90 \
+	formpi.f90 mpi-tish.f90
+OBJS = $(SRC:.f90=.o)
 .SUFFIXES: .f90 .o
 
 all:$(PROGS)
