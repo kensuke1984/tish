@@ -159,8 +159,7 @@ program tish
         iimax = int(tlen * 2.d0)
         call calgrid( nzone,vrmin,vrmax,vsv,rmin,rmax,&
             iimax,1,tlen,vmin,gridpar,dzpar )
-        call calra ( maxnlay,maxnzone,&
-            nnlayer,gridpar,dzpar,nzone,vrmin,vrmax,&
+        call calra (nnlayer,gridpar,dzpar,nzone,vrmin,vrmax,&
             rmin,rmax,nlayer,ra,re )
         !c --- checking the parameter
         if ( nnlayer>maxnlay ) stop 'The number of grid points is too large.'
@@ -214,11 +213,10 @@ program tish
         call calhl( 2,3,gvra,gecN, gra,work )
         gh4(1:8)=(gh4(1:8)+work(1:8))/2d0
 
-        !c
         nn = nnlayer + 1
         ns = isp(spn) + dint(spo)
         ins = 4 * ns - 3
-        !c
+
         llog = 0
         do ii=1,2 ! omega-loop
             if(ii==1) then
@@ -311,8 +309,7 @@ program tish
     call calgrid( nzone,vrmin,vrmax,vsv,rmin,rmax,&
         iimax,1,tlen, vmin,gridpar,dzpar )
 
-    call calra ( maxnlay,maxnzone,&
-        nnlayer, gridpar,dzpar,nzone,vrmin,vrmax,&
+    call calra ( nnlayer, gridpar,dzpar,nzone,vrmin,vrmax,&
         rmin,rmax,nlayer,ra,re )
     !c --- checking the parameter
     if ( nnlayer>maxnlay ) stop 'The number of grid points is too large.'
